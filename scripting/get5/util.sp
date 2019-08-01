@@ -5,7 +5,7 @@
 #define AUTH_LENGTH 64
 
 // Dummy value for when we need to write a keyvalue string, but we don't care about he value.
-// Trying to write an empty string often results in the keyvalue not being writte, so we use this.
+// Trying to write an empty string often results in the keyvalue not being written, so we use this.
 #define KEYVALUE_STRING_PLACEHOLDER "__placeholder"
 
 static char _colorNames[][] = {"{NORMAL}", "{DARK_RED}",    "{PINK}",      "{GREEN}",
@@ -155,6 +155,7 @@ stock bool Record(const char[] demoName) {
 
 stock void StopRecording() {
   ServerCommand("tv_stoprecord");
+  LogDebug("Calling Get5_OnDemoFinished(file=%s)", g_DemoFileName);
   Call_StartForward(g_OnDemoFinished);
   Call_PushString(g_DemoFileName);
   Call_Finish();
