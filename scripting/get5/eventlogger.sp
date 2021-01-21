@@ -12,7 +12,7 @@ static void EventLogger_LogEvent(const char[] eventName, JSON_Object params) {
   const int kMaxCharacters = 1000;
   char buffer[2048];
 
-  json.Encode(buffer, sizeof(buffer));
+  json.Encode(buffer, sizeof(buffer), g_PrettyPrintJsonCvar.BoolValue);
   if (strlen(buffer) > kMaxCharacters) {
     LogError("Event JSON too long (%d characters, %d max): %s", eventName, strlen(buffer),
              kMaxCharacters);
@@ -59,6 +59,14 @@ static void AddPlayer(JSON_Object params, const char[] key, int client) {
     Format(value, sizeof(value), "none");
   }
   params.SetString(key, value);
+}
+
+static void AddIpAddress(JSON_Object params, int client) {
+  char value[32];
+  if (IsValidClient(client)) {
+    GetClientIP(client, value, sizeof(value));
+  }
+  params.SetString("ip", value);
 }
 
 public void EventLogger_SeriesStart() {
@@ -173,6 +181,13 @@ public void EventLogger_SeriesEnd(MatchTeam winner, int t1score, int t2score) {
   EventLogger_EndEvent("series_end");
 }
 
+public void EventLogger_SeriesCancel(int t1score, int t2score) {
+  EventLogger_StartEvent();
+  params.SetInt("team1_series_score", t1score);
+  params.SetInt("team2_series_score", t2score);
+  EventLogger_EndEvent("series_cancel");
+}
+
 public void EventLogger_BackupLoaded(const char[] path) {
   EventLogger_StartEvent();
   params.SetString("file", path);
@@ -221,6 +236,7 @@ public void EventLogger_PlayerConnect(int client) {
   EventLogger_StartEvent();
   AddMapData(params);
   AddPlayer(params, "client", client);
+  AddIpAddress(params, client);
   EventLogger_EndEvent("player_connect");
 }
 
@@ -229,4 +245,21 @@ public void EventLogger_PlayerDisconnect(int client) {
   AddMapData(params);
   AddPlayer(params, "client", client);
   EventLogger_EndEvent("player_disconnect");
+}
+
+public void EventLogger_TeamReady(MatchTeam team, const char[] stage) {
+  EventLogger_StartEvent();
+
+  AddTeam(params, "team", team);
+  params.SetString("stage", stage);
+
+  EventLogger_EndEvent("team_ready");
+}
+
+public void EventLogger_TeamUnready(MatchTeam team) {
+  EventLogger_StartEvent();
+
+  AddTeam(params, "team", team);
+
+  EventLogger_EndEvent("team_unready");
 }

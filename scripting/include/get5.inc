@@ -15,6 +15,8 @@ enum Get5State {
   Get5State_PostGame,                      // postgame screen + waiting for GOTV to finish broadcast
 };
 
+#define MATCHTEAM_COUNT 4
+
 enum MatchTeam {
   MatchTeam_Team1,
   MatchTeam_Team2,
@@ -191,9 +193,13 @@ native int Get5_IncreasePlayerStat(int client, const char[] statName, int amount
 #define STAT_FIRSTDEATH_T "firstdeath_t"
 #define STAT_FIRSTDEATH_CT "firstdeath_ct"
 #define STAT_TRADEKILL "tradekill"
+#define STAT_KAST "kast"
+#define STAT_CONTRIBUTION_SCORE "contribution_score"
+#define STAT_MVP "mvp"
 
 public SharedPlugin __pl_get5 = {
-    name = "get5", file = "get5.smx",
+    name = "get5",
+    file = "get5.smx",
 #if defined REQUIRE_PLUGIN
     required = 1,
 #else

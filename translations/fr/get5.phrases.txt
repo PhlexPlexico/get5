@@ -14,7 +14,7 @@
     }
     "ReadyToKnifeInfoMessage"
     {
-        "fr"            "Entrez {GREEN}!ready {NORMAL}quand pour être prêt(e) pour à démarrer un round au couteau."
+        "fr"            "Entrez {GREEN}!ready {NORMAL}quand vous êtes prêt(e) à démarrer un round au couteau."
     }
     "ReadyToStartInfoMessage"
     {
@@ -30,15 +30,19 @@
     }
     "WaitingForEnemySwapInfoMessage"
     {
-        "fr"            "{1} a gagné le round a couteau. Attente de leur choix entre !stay ou !swap."
+        "fr"            "{1} a gagné le round au couteau. En attente de leur choix entre !stay et !swap."
     }
     "WaitingForGOTVBrodcastEndingInfoMessage"
     {
-        "fr"            "La carte changera dès que la diffusion GOTV sera terminée."
+        "fr"            "La map changera dès que la diffusion GOTV sera terminée."
+    }
+    "WaitingForGOTVVetoInfoMessage"
+    {
+        "fr"            "La map changera dès que la diffusion GOTV aura diffusé le tour de veto."
     }
     "NoMatchSetupInfoMessage"
     {
-        "fr"            "Aucune configuration de match trouvée"
+        "fr"			"Aucune configuration n'est chargée"
     }
     "YourAreNotAPlayerInfoMessage"
     {
@@ -50,19 +54,19 @@
     }
     "TeamForfeitInfoMessage"
     {
-        "fr"            "{1} ne s'est pas déclaré prête à temps et a déclaré forfait."
+        "fr"            "{1} ne s'est pas déclarée prête à temps et a été déclarée forfait."
     }
     "MinutesToForfeitMessage"
     {
-        "fr"            "{1} dispose encore de {2} minutes pour se déclarer prête, sinon elle déclarera forfait."
+        "fr"            "{1} dispose encore de {2} minutes pour se déclarer prête, sinon elle sera déclarée forfait."
     }
     "SecondsToForfeitInfoMessage"
     {
-        "fr"            "{1} dispose encore de {2} secondes pour se déclarer prête, sinon elle déclarera forfait."
+        "fr"            "{1} dispose encore de {2} secondes pour se déclarer prête, sinon elle sera déclarée forfait."
     }
     "10SecondsToForfeitInfoMessage"
     {
-        "fr"            "{1} a 10 secondes pour se déclarer prêt(e), sinon il/elle déclarera forfait."
+        "fr"            "{1} a 10 secondes pour se déclarer prêt(e), sinon elle sera déclarée forfait."
     }
     "PausePeriodSuffix"
     {
@@ -80,9 +84,17 @@
     {
         "fr"            "{1} a mis le match en pause."
     }
+    "MatchTechPausedByTeamMessage"
+    {
+        "fr"            "{1} a demandé une pause technique."
+    }
+    "AdminForceTechPauseInfoMessage"
+    {
+        "fr"            "Un admin a demandé une pause technique."
+    }
     "PauseTimeExpiration10SecInfoMessage"
     {
-        "fr"            "{1} est bientôt parvenue à la fin de sa pause, fin dans 10 secondes."
+        "fr"            "{1} terminera sa pause dans 10 secondes."
     }
     "PauseTimeExpirationInfoMessage"
     {
@@ -98,7 +110,7 @@
     }
     "WaitingForUnpauseInfoMessage"
     {
-        "fr"            "{1} désire reprendre le match, en attente que {2} tape !unpause."
+        "fr"            "{1} désire reprendre le match, en attente que {2} tape !unpause"
     }
     "PausesLeftInfoMessage"
     {
@@ -110,7 +122,7 @@
     }
     "TeamFailToReadyMinPlayerCheck"
     {
-        "fr"            "Vous devez disposer d'au moins {1} joueur sur le serveur pour vous déclarer prêt(e)."
+        "fr"            "Vous devez disposer d'au moins {1} joueur(s) sur le serveur pour vous déclarer prêt(e)."
     }
     "TeamReadyToVetoInfoMessage"
     {
@@ -134,11 +146,11 @@
     }
     "ForceReadyInfoMessage"
     {
-        "fr"            "Vous pouvez entrer {GREEN}!forceready {NORMAL}pour forcer votre équipe à être prête si vous avez moins de {GREEN}{1}{NORMAL} joueurs."
+        "fr"            "Vous pouvez entrer {GREEN}!forceready {NORMAL}pour forcer le statut de votre équipe si vous avez moins de {GREEN}{1}{NORMAL} joueurs."
     }
     "TeammateForceReadied"
     {
-        "fr"            "Votre équipe s'est déclaré prête (de force) par {GREEN}{1}"
+        "fr"            "Votre équipe s'est déclaré prête (de force) par {GREEN}{1}."
     }
     "AdminForceReadyInfoMessage"
     {
@@ -150,7 +162,7 @@
     }
     "AdminForcePauseInfoMessage"
     {
-        "fr"            "Un admin a forcé le match en pause."
+        "fr"            "Un admin a forcé la pause du match."
     }
     "AdminForceUnPauseInfoMessage"
     {
@@ -158,15 +170,15 @@
     }
     "TeamWantsToReloadLastRoundInfoMessage"
     {
-        "fr"            "{1} veut arrêter et recommencer au dernier round, cela nécessite {2} pour confirmer avec !stop."
+        "fr"            "{1} souhaite arrêter et recommencer au dernier round, cela nécessite que {2} confirme avec !stop."
     }
     "TeamWinningSeriesInfoMessage"
     {
-        "fr"            "{1}{NORMAL} gagne les séries {2}-{3}"
+        "fr"            "{1}{NORMAL} gagne la série avec {2}-{3}"
     }
     "SeriesTiedInfoMessage"
     {
-        "fr"            "La série est ex-æquo at {1}-{2}"
+        "fr"            "La série est ex-æquo avec {1}-{2}"
     }
     "NextSeriesMapInfoMessage"
     {
@@ -176,9 +188,13 @@
     {
         "fr"            "{1} a remporté la victoire."
     }
+    "TeamTiedMatchInfoMessage"
+    {
+        "fr"            "{1} et {2} ont fait match nul."
+    }
     "TeamsSplitSeriesBO2InfoMessage"
     {
-        "fr"            "{1} et {2} ont gagné autant de match (1-1)."
+        "fr"            "{1} et {2} ont gagné autant de matchs (1-1)."
     }
     "TeamWonSeriesInfoMessage"
     {
@@ -202,19 +218,19 @@
     }
     "MatchIsLiveInfoMessage"
     {
-        "fr"            "Le match est en {GREEN}LIVE"
+        "fr"            "Match est en {GREEN}LIVE"
     }
     "KnifeIn5SecInfoMessage"
     {
-        "fr"            "Le knife round commencera dans 5 secondes."
+        "fr"            "Le round au couteau va commencer dans 5 secondes !"
     }
     "KnifeInfoMessage"
     {
-        "fr"            "Knife !"
+        "fr"            "Knife!"
     }
     "TeamDecidedToStayInfoMessage"
     {
-        "fr"            "{1} a décidé de rester."
+        "fr"            "{1} {1} a décidé de rester."
     }
     "TeamDecidedToSwapInfoMessage"
     {
@@ -222,7 +238,7 @@
     }
     "TeamLostTimeToDecideInfoMessage"
     {
-        "fr"            "{1} restera car ils n'ont pas pris leur décision à temps."
+        "fr"            "{1} restera dans le même camp car ils n'ont pas pris leur décision à temps."
     }
     "ChangingMapInfoMessage"
     {
@@ -238,15 +254,15 @@
     }
     "TeamPickedMapInfoMessage"
     {
-        "fr"            "{1} a choisi {GREEN}{2} {NORMAL}comme map {3}"
+        "fr"            "{1} a choisi {GREEN}{2} {NORMAL}comme map {3}}"
     }
     "TeamSelectSideInfoMessage"
     {
-        "fr"            "{1} a choisi de commencer sur {GREEN}{2} {NORMAL}sur {3}"
+        "fr"            "{1} a choisi de commencer en {GREEN}{2} {NORMAL}sur {3}"
     }
     "TeamVetoedMapInfoMessage"
     {
-        "fr"            "{1} a rejetté {LIGHT_RED}{2}"
+        "fr"            "{1} a rejeté {LIGHT_RED}{2}"
     }
     "CaptainLeftOnVetoInfoMessage"
     {
@@ -271,5 +287,45 @@
     "NotReadyTag"
     {
         "fr"            "[PAS PRÊT]"
+    }
+    "MatchPoweredBy"
+    {
+        "fr"        "Powered by {YELLOW}Get5"
+    }
+    "MapVetoPickMenuText"
+    {
+        "fr"        "Selectionnez une map à JOUER :"
+    }
+    "MapVetoPickConfirmMenuText"
+    {
+        "fr"        "Confirmez que vous souhaitez la jouer {1} :"
+    }
+    "MapVetoBanMenuText"
+    {
+        "fr"        "Selectionnez une map à BANNIR :"
+    }
+    "MapVetoBanConfirmMenuText"
+    {
+        "fr"        "Confirmez que vous souhaitez la bannir {1} :"
+    }
+    "MapVetoSidePickMenuText"
+    {
+        "fr"        "Selectionner un côté pour {1}"
+    }
+    "MapVetoSidePickConfirmMenuText"
+    {
+        "fr"        "Confirmez que vous voulez commencer {1} :"
+    }
+    "ConfirmPositiveOptionText"
+    {
+        "fr"        "Oui"
+    }
+    "ConfirmNegativeOptionText"
+    {
+        "fr"        "Non"
+    }
+    "VetoCountdown"
+    {
+        "fr"        "Le veto commencera dans {GREEN}{1} {NORMAL}secondes."
     }
 }

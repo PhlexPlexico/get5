@@ -8,6 +8,7 @@ public void Stats_PluginStart() {
   HookEvent("bomb_exploded", Stats_BombExplodedEvent);
   HookEvent("flashbang_detonate", Stats_FlashbangDetonateEvent, EventHookMode_Pre);
   HookEvent("player_blind", Stats_PlayerBlindEvent);
+  HookEvent("round_mvp", Stats_RoundMVPEvent);
 }
 
 public void Stats_Reset() {
@@ -46,6 +47,9 @@ public void Stats_ResetClientRoundValues(int client) {
   g_RoundFlashedBy[client] = 0;
   g_PlayerKilledBy[client] = -1;
   g_PlayerKilledByTime[client] = 0.0;
+  g_PlayerRoundKillOrAssistOrTradedDeath[client] = false;
+  g_PlayerSurvived[client] = true;
+
   for (int i = 1; i <= MaxClients; i++) {
     g_DamageDone[client][i] = 0;
     g_DamageDoneHits[client][i] = 0;
@@ -85,7 +89,7 @@ public void Stats_RoundEnd(int csTeamWinner) {
   g_StatsKv.SetNum(STAT_TEAMSCORE, CS_GetTeamScore(MatchTeamToCSTeam(MatchTeam_Team2)));
   GoBackFromTeam();
 
-  // Update player 1vx and x-kill values.
+  // Update player 1vx, x-kill, and KAST values.
   for (int i = 1; i <= MaxClients; i++) {
     if (IsPlayer(i)) {
       MatchTeam team = GetClientMatchTeam(i);
@@ -118,10 +122,17 @@ public void Stats_RoundEnd(int csTeamWinner) {
           }
         }
 
+        if (g_PlayerRoundKillOrAssistOrTradedDeath[i] || g_PlayerSurvived[i]) {
+          IncrementPlayerStat(i, STAT_KAST);
+        }
+
         GoToPlayer(i);
         char name[MAX_NAME_LENGTH];
         GetClientName(i, name, sizeof(name));
         g_StatsKv.SetString(STAT_NAME, name);
+
+        g_StatsKv.SetNum(STAT_CONTRIBUTION_SCORE, CS_GetClientContributionScore(i));
+
         GoBackFromPlayer();
       }
     }
@@ -187,6 +198,9 @@ public Action Stats_PlayerDeathEvent(Event event, const char[] name, bool dontBr
   if (validVictim) {
     IncrementPlayerStat(victim, STAT_DEATHS);
 
+    // used for calculating round KAST
+    g_PlayerSurvived[victim] = false;
+
     int victim_team = GetClientTeam(victim);
     if (!g_TeamFirstDeathDone[victim_team]) {
       g_TeamFirstDeathDone[victim_team] = true;
@@ -211,10 +225,15 @@ public Action Stats_PlayerDeathEvent(Event event, const char[] name, bool dontBr
       UpdateTradeStat(attacker, victim);
 
       IncrementPlayerStat(attacker, STAT_KILLS);
+      g_PlayerRoundKillOrAssistOrTradedDeath[attacker] = true;
+
       if (headshot)
         IncrementPlayerStat(attacker, STAT_HEADSHOT_KILLS);
-      if (IsValidClient(assister))
+
+      if (IsValidClient(assister)) {
         IncrementPlayerStat(assister, STAT_ASSISTS);
+        g_PlayerRoundKillOrAssistOrTradedDeath[assister] = true;
+      }
 
       int flasher = g_RoundFlashedBy[victim];
       if (IsValidClient(flasher) && flasher != attacker)
@@ -259,6 +278,8 @@ static void UpdateTradeStat(int attacker, int victim) {
       float dt = GetGameTime() - g_PlayerKilledByTime[i];
       if (dt < kTimeGivenToTrade) {
         IncrementPlayerStat(attacker, STAT_TRADEKILL);
+        // teammate (i) was traded
+        g_PlayerRoundKillOrAssistOrTradedDeath[i] = true;
       }
     }
   }
@@ -368,6 +389,21 @@ public Action Stats_PlayerBlindEvent(Event event, const char[] name, bool dontBr
   int userid = event.GetInt("userid");
   int client = GetClientOfUserId(userid);
   RequestFrame(GetFlashInfo, GetClientSerial(client));
+
+  return Plugin_Continue;
+}
+
+public Action Stats_RoundMVPEvent(Event event, const char[] name, bool dontBroadcast) {
+  if (g_GameState != Get5State_Live) {
+    return Plugin_Continue;
+  }
+
+  int userid = event.GetInt("userid");
+  int client = GetClientOfUserId(userid);
+
+  if (IsValidClient(client)) {
+    IncrementPlayerStat(client, STAT_MVP);
+  }
 
   return Plugin_Continue;
 }

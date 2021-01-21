@@ -69,6 +69,7 @@ ConVar g_MaxPausesCvar;
 ConVar g_MaxPauseTimeCvar;
 ConVar g_MessagePrefixCvar;
 ConVar g_PausingEnabledCvar;
+ConVar g_PrettyPrintJsonCvar;
 ConVar g_ResetPausesEachHalfCvar;
 ConVar g_ServerIdCvar;
 ConVar g_SetClientClanTagCvar;
@@ -95,14 +96,14 @@ int g_MapsToWin = 1;  // Maps needed to win the series.
 bool g_BO2Match = false;
 char g_MatchID[MATCH_ID_LENGTH];
 ArrayList g_MapPoolList = null;
-ArrayList g_TeamAuths[MatchTeam_Count];
+ArrayList g_TeamAuths[MATCHTEAM_COUNT];
 StringMap g_PlayerNames;
-char g_TeamNames[MatchTeam_Count][MAX_CVAR_LENGTH];
-char g_TeamTags[MatchTeam_Count][MAX_CVAR_LENGTH];
-char g_FormattedTeamNames[MatchTeam_Count][MAX_CVAR_LENGTH];
-char g_TeamFlags[MatchTeam_Count][MAX_CVAR_LENGTH];
-char g_TeamLogos[MatchTeam_Count][MAX_CVAR_LENGTH];
-char g_TeamMatchTexts[MatchTeam_Count][MAX_CVAR_LENGTH];
+char g_TeamNames[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
+char g_TeamTags[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
+char g_FormattedTeamNames[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
+char g_TeamFlags[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
+char g_TeamLogos[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
+char g_TeamMatchTexts[MATCHTEAM_COUNT][MAX_CVAR_LENGTH];
 char g_MatchTitle[MAX_CVAR_LENGTH];
 int g_FavoredTeamPercentage = 0;
 char g_FavoredTeamText[MAX_CVAR_LENGTH];
@@ -137,31 +138,39 @@ int g_RoundClutchingEnemyCount[MAXPLAYERS +
                                1];  // number of enemies left alive when last alive on your team
 int g_LastFlashBangThrower = -1;    // last client to have a flashbang detonate
 int g_RoundFlashedBy[MAXPLAYERS + 1];
-bool g_TeamFirstKillDone[MatchTeam_Count];
-bool g_TeamFirstDeathDone[MatchTeam_Count];
+bool g_TeamFirstKillDone[MATCHTEAM_COUNT];
+bool g_TeamFirstDeathDone[MATCHTEAM_COUNT];
 int g_PlayerKilledBy[MAXPLAYERS + 1];
 float g_PlayerKilledByTime[MAXPLAYERS + 1];
 int g_DamageDone[MAXPLAYERS + 1][MAXPLAYERS + 1];
 int g_DamageDoneHits[MAXPLAYERS + 1][MAXPLAYERS + 1];
+bool g_PlayerRoundKillOrAssistOrTradedDeath[MAXPLAYERS + 1];
+bool g_PlayerSurvived[MAXPLAYERS + 1];
 KeyValues g_StatsKv;
 
 ArrayList g_TeamScoresPerMap = null;
 char g_LoadedConfigFile[PLATFORM_MAX_PATH];
-int g_VetoCaptains[MatchTeam_Count];        // Clients doing the map vetos.
-int g_TeamSeriesScores[MatchTeam_Count];    // Current number of maps won per-team.
-bool g_TeamReadyOverride[MatchTeam_Count];  // Whether a team has been voluntarily force readied.
+char g_LoadedConfigUrl[PLATFORM_MAX_PATH];
+int g_VetoCaptains[MATCHTEAM_COUNT];        // Clients doing the map vetos.
+int g_TeamSeriesScores[MATCHTEAM_COUNT];    // Current number of maps won per-team.
+bool g_TeamReadyOverride[MATCHTEAM_COUNT];  // Whether a team has been voluntarily force readied.
 bool g_ClientReady[MAXPLAYERS + 1];         // Whether clients are marked ready.
-int g_TeamSide[MatchTeam_Count];            // Current CS_TEAM_* side for the team.
-int g_TeamStartingSide[MatchTeam_Count];
-bool g_TeamReadyForUnpause[MatchTeam_Count];
-bool g_TeamGivenStopCommand[MatchTeam_Count];
+int g_TeamSide[MATCHTEAM_COUNT];            // Current CS_TEAM_* side for the team.
+int g_TeamStartingSide[MATCHTEAM_COUNT];
+bool g_TeamReadyForUnpause[MATCHTEAM_COUNT];
+bool g_TeamGivenStopCommand[MATCHTEAM_COUNT];
 bool g_InExtendedPause;
-int g_TeamPauseTimeUsed[MatchTeam_Count];
-int g_TeamPausesUsed[MatchTeam_Count];
+int g_TeamPauseTimeUsed[MATCHTEAM_COUNT];
+int g_TeamPausesUsed[MATCHTEAM_COUNT];
 int g_ReadyTimeWaitingUsed = 0;
 char g_DefaultTeamColors[][] = {
-    TEAM1_COLOR, TEAM2_COLOR, "{NORMAL}", "{NORMAL}",
+    TEAM1_COLOR,
+    TEAM2_COLOR,
+    "{NORMAL}",
+    "{NORMAL}",
 };
+
+char g_LastKickedPlayerAuth[64];
 
 bool g_ForceWinnerSignal = false;
 MatchTeam g_ForcedWinner = MatchTeam_TeamNone;
@@ -299,6 +308,8 @@ public void OnPluginStart() {
       CreateConVar("get5_reset_pauses_each_half", "1",
                    "Whether pause limits will be reset each halftime period");
   g_PausingEnabledCvar = CreateConVar("get5_pausing_enabled", "1", "Whether pausing is allowed.");
+  g_PrettyPrintJsonCvar = CreateConVar("get5_pretty_print_json", "1",
+                                       "Whether all JSON output is in pretty-print format.");
   g_ServerIdCvar = CreateConVar(
       "get5_server_id", "0",
       "Integer that identifies your server. This is used in temp files to prevent collisions.");
@@ -347,6 +358,7 @@ public void OnPluginStart() {
   /** Client commands **/
   g_ChatAliases = new ArrayList(ByteCountToCells(ALIAS_LENGTH));
   g_ChatAliasesCommands = new ArrayList(ByteCountToCells(COMMAND_LENGTH));
+  AddAliasedCommand("r", Command_Ready, "Marks the client as ready");
   AddAliasedCommand("ready", Command_Ready, "Marks the client as ready");
   AddAliasedCommand("unready", Command_NotReady, "Marks the client as not ready");
   AddAliasedCommand("notready", Command_NotReady, "Marks the client as not ready");
@@ -377,6 +389,10 @@ public void OnPluginStart() {
               "Adds a steamid to a match team");
   RegAdminCmd("get5_removeplayer", Command_RemovePlayer, ADMFLAG_CHANGEMAP,
               "Removes a steamid from a match team");
+  RegAdminCmd("get5_addkickedplayer", Command_AddKickedPlayer, ADMFLAG_CHANGEMAP,
+              "Adds the last kicked steamid to a match team");
+  RegAdminCmd("get5_removekickedplayer", Command_RemoveKickedPlayer, ADMFLAG_CHANGEMAP,
+              "Removes the last kicked steamid from a match team");
   RegAdminCmd("get5_creatematch", Command_CreateMatch, ADMFLAG_CHANGEMAP,
               "Creates and loads a match using the players currently on the server as a Bo1");
 
@@ -436,7 +452,7 @@ public void OnPluginStart() {
   g_MapSides = new ArrayList();
   g_CvarNames = new ArrayList(MAX_CVAR_LENGTH);
   g_CvarValues = new ArrayList(MAX_CVAR_LENGTH);
-  g_TeamScoresPerMap = new ArrayList(view_as<int>(MatchTeam_Count));
+  g_TeamScoresPerMap = new ArrayList(MATCHTEAM_COUNT);
 
   for (int i = 0; i < sizeof(g_TeamAuths); i++) {
     g_TeamAuths[i] = new ArrayList(AUTH_LENGTH);
@@ -527,17 +543,10 @@ public void OnClientAuthorized(int client, const char[] auth) {
     return;
   }
 
-  if (g_GameState == Get5State_None && g_KickClientsWithNoMatchCvar.BoolValue) {
-    if (!g_KickClientImmunity.BoolValue ||
-        !CheckCommandAccess(client, "get5_kickcheck", ADMFLAG_CHANGEMAP)) {
-      KickClient(client, "%t", "NoMatchSetupInfoMessage");
-    }
-  }
-
   if (g_GameState != Get5State_None && g_CheckAuthsCvar.BoolValue) {
     MatchTeam team = GetClientMatchTeam(client);
     if (team == MatchTeam_TeamNone) {
-      KickClient(client, "%t", "YourAreNotAPlayerInfoMessage");
+      RememberAndKickClient(client, "%t", "YourAreNotAPlayerInfoMessage");
     } else {
       int teamCount = CountPlayersOnMatchTeam(team, client);
       if (teamCount >= g_PlayersPerTeam && !g_CoachingEnabledCvar.BoolValue) {
@@ -545,6 +554,11 @@ public void OnClientAuthorized(int client, const char[] auth) {
       }
     }
   }
+}
+
+public void RememberAndKickClient(int client, const char[] format, const char[] translationPhrase) {
+  GetAuth(client, g_LastKickedPlayerAuth, sizeof(g_LastKickedPlayerAuth));
+  KickClient(client, format, translationPhrase);
 }
 
 public void OnClientPutInServer(int client) {
@@ -561,6 +575,17 @@ public void OnClientPutInServer(int client) {
   }
 
   Stats_ResetClientRoundValues(client);
+}
+
+public void OnClientPostAdminCheck(int client) {
+  if (IsPlayer(client)) {
+    if (g_GameState == Get5State_None && g_KickClientsWithNoMatchCvar.BoolValue) {
+      if (!g_KickClientImmunity.BoolValue ||
+          !CheckCommandAccess(client, "get5_kickcheck", ADMFLAG_CHANGEMAP)) {
+        KickClient(client, "%t", "NoMatchSetupInfoMessage");
+      }
+    }
+  }
 }
 
 public void OnClientSayCommand_Post(int client, const char[] command, const char[] sArgs) {
@@ -766,6 +791,8 @@ public Action Command_EndMatch(int client, int args) {
   Call_PushCell(GetMapNumber() - 1);
   Call_Finish();
 
+  EventLogger_SeriesCancel(g_TeamSeriesScores[MatchTeam_Team1],
+                           g_TeamSeriesScores[MatchTeam_Team2]);
   LogDebug("Calling Get5_OnSeriesResult(winner=%d, team1_series_score=%d, team2_series_score=%d)",
            MatchTeam_TeamNone, g_TeamSeriesScores[MatchTeam_Team1],
            g_TeamSeriesScores[MatchTeam_Team2]);
@@ -822,6 +849,10 @@ public Action Command_LoadMatchUrl(int client, int args) {
     if (args >= 1 && GetCmdArgString(arg, sizeof(arg))) {
       if (!LoadMatchFromUrl(arg)) {
         ReplyToCommand(client, "Failed to load match config.");
+      }
+      else
+      {
+        ReplyToCommand(client, "Match config loading initialized.");
       }
     } else {
       ReplyToCommand(client, "Usage: get5_loadmatch_url <url>");
@@ -905,9 +936,13 @@ public bool RestoreLastRound() {
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
   if (g_GameState != Get5State_None && g_GameState < Get5State_KnifeRound) {
     int client = GetClientOfUserId(event.GetInt("userid"));
-    if (IsPlayer(client) && OnActiveTeam(client)) {
-      SetEntProp(client, Prop_Send, "m_iAccount", GetCvarIntSafe("mp_maxmoney"));
-    }
+    CreateTimer(0.1, Timer_ReplenishMoney, client, TIMER_FLAG_NO_MAPCHANGE);
+  }
+}
+
+public Action Timer_ReplenishMoney(Handle timer, int client) {
+  if (IsPlayer(client) && OnActiveTeam(client)) {
+    SetEntProp(client, Prop_Send, "m_iAccount", GetCvarIntSafe("mp_maxmoney"));
   }
 }
 
@@ -1045,9 +1080,8 @@ public Action Timer_NextMatchMap(Handle timer) {
 public void KickClientsOnEnd() {
   if (g_KickClientsWithNoMatchCvar.BoolValue) {
     for (int i = 1; i <= MaxClients; i++) {
-      if (IsPlayer(i) &&
-          !(g_KickClientImmunity.BoolValue &&
-            CheckCommandAccess(i, "get5_kickcheck", ADMFLAG_CHANGEMAP))) {
+      if (IsPlayer(i) && !(g_KickClientImmunity.BoolValue &&
+                           CheckCommandAccess(i, "get5_kickcheck", ADMFLAG_CHANGEMAP))) {
         KickClient(i, "%t", "MatchFinishedInfoMessage");
       }
     }
@@ -1076,7 +1110,8 @@ public void EndSeries() {
   Stats_SeriesEnd(winningTeam);
   EventLogger_SeriesEnd(winningTeam, t1maps, t2maps);
 
-  LogDebug("Calling Get5_OnSeriesResult(winner=%d, t1maps=%d, t2maps=%d)", winningTeam, t1maps, t2maps);
+  LogDebug("Calling Get5_OnSeriesResult(winner=%d, t1maps=%d, t2maps=%d)", winningTeam, t1maps,
+           t2maps);
   Call_StartForward(g_OnSeriesResult);
   Call_PushCell(winningTeam);
   Call_PushCell(t1maps);
@@ -1140,6 +1175,8 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
   }
 
   if (g_GameState == Get5State_KnifeRound && g_HasKnifeRoundStarted) {
+    g_HasKnifeRoundStarted = false;
+
     ChangeState(Get5State_WaitingForKnifeRoundDecision);
     CreateTimer(1.0, Timer_PostKnife);
 
@@ -1223,6 +1260,8 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 
 public void SwapSides() {
   LogDebug("SwapSides");
+  EventLogger_SideSwap(g_TeamSide[MatchTeam_Team1], g_TeamSide[MatchTeam_Team2]);
+
   int tmp = g_TeamSide[MatchTeam_Team1];
   g_TeamSide[MatchTeam_Team1] = g_TeamSide[MatchTeam_Team2];
   g_TeamSide[MatchTeam_Team2] = tmp;
@@ -1233,8 +1272,6 @@ public void SwapSides() {
       g_TeamPausesUsed[team] = 0;
     }
   }
-
-  EventLogger_SideSwap(g_TeamSide[MatchTeam_Team1], g_TeamSide[MatchTeam_Team2]);
 }
 
 /**
@@ -1353,7 +1390,7 @@ public Action Command_Status(int client, int args) {
   }
 
   char buffer[4096];
-  json.Encode(buffer, sizeof(buffer));
+  json.Encode(buffer, sizeof(buffer), g_PrettyPrintJsonCvar.BoolValue);
   ReplyToCommand(client, buffer);
 
   json.Cleanup();
@@ -1400,6 +1437,7 @@ public bool FormatCvarString(ConVar cvar, char[] buffer, int len) {
 
   int mapNumber = g_TeamSeriesScores[MatchTeam_Team1] + g_TeamSeriesScores[MatchTeam_Team2] + 1;
   ReplaceStringWithInt(buffer, len, "{MAPNUMBER}", mapNumber, false);
+  ReplaceString(buffer, len, "{MATCHTITLE}", g_MatchTitle, false);
   ReplaceString(buffer, len, "{MATCHID}", g_MatchID, false);
   ReplaceString(buffer, len, "{MAPNAME}", mapName, false);
   ReplaceStringWithInt(buffer, len, "{SERVERID}", g_ServerIdCvar.IntValue, false);
