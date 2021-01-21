@@ -47,7 +47,7 @@ static void AddTeam(JSON_Object params, const char[] key, MatchTeam team) {
 
 static void AddPause(JSON_Object params, const char[] key, PauseType pause) {
   char value[16];
-  GetPauseType(pause, value, sizeof(pause));
+  GetPauseType(pause, value, sizeof(value));
   params.SetString(key, value);
 }
 
