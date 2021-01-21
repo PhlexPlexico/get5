@@ -162,6 +162,7 @@ bool g_TeamGivenStopCommand[MATCHTEAM_COUNT];
 bool g_InExtendedPause;
 int g_TeamPauseTimeUsed[MATCHTEAM_COUNT];
 int g_TeamPausesUsed[MATCHTEAM_COUNT];
+int g_PauseTimeUsed = 0;
 int g_ReadyTimeWaitingUsed = 0;
 char g_DefaultTeamColors[][] = {
     TEAM1_COLOR,
