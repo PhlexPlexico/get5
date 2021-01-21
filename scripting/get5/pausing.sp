@@ -11,11 +11,13 @@ public Action Command_TechPause(int client, int args) {
 
   if (client == 0) {
     Pause();
+    EventLogger_PauseCommand(MatchTeam_TeamNone, PauseType_Tech);
     Get5_MessageToAll("%t", "AdminForceTechPauseInfoMessage");
     return Plugin_Handled;
   }
-
+  MatchTeam team = GetClientMatchTeam(client);
   Pause();
+  EventLogger_PauseCommand(team, PauseType_Tech);
   Get5_MessageToAll("%t", "MatchTechPausedByTeamMessage", client);
 
   return Plugin_Handled;
@@ -32,6 +34,7 @@ public Action Command_Pause(int client, int args) {
     g_InExtendedPause = true;
 
     Pause();
+    EventLogger_PauseCommand(MatchTeam_TeamNone, PauseType_Tac);
     Get5_MessageToAll("%t", "AdminForcePauseInfoMessage");
     return Plugin_Handled;
   }
@@ -59,6 +62,7 @@ public Action Command_Pause(int client, int args) {
 
   // If the pause will need explicit resuming, we will create a timer to poll the pause status.
   bool need_resume = Pause(g_FixedPauseTimeCvar.IntValue, MatchTeamToCSTeam(team));
+  EventLogger_PauseCommand(team, PauseType_Tac);
   if (IsPlayer(client)) {
     Get5_MessageToAll("%t", "MatchPausedByTeamMessage", client);
   }
@@ -124,6 +128,7 @@ public Action Timer_PauseTimeCheck(Handle timer, int data) {
   if (timeLeft <= 0) {
     Get5_MessageToAll("%t", "PauseRunoutInfoMessage", g_FormattedTeamNames[team]);
     Unpause();
+    EventLogger_Unpause(MatchTeam_TeamNone);
     return Plugin_Stop;
   }
 
@@ -137,6 +142,7 @@ public Action Command_Unpause(int client, int args) {
   // Let console force unpause
   if (client == 0) {
     Unpause();
+    EventLogger_Unpause(MatchTeam_TeamNone);
     Get5_MessageToAll("%t", "AdminForceUnPauseInfoMessage");
     return Plugin_Handled;
   }
@@ -150,6 +156,7 @@ public Action Command_Unpause(int client, int args) {
 
   if (g_TeamReadyForUnpause[MatchTeam_Team1] && g_TeamReadyForUnpause[MatchTeam_Team2]) {
     Unpause();
+    EventLogger_Unpause(team);
     if (IsPlayer(client)) {
       Get5_MessageToAll("%t", "MatchUnpauseInfoMessage", client);
     }
