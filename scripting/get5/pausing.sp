@@ -89,8 +89,9 @@ public Action Command_Pause(int client, int args) {
 
   if (IsPlayerTeam(team)) {
     if (need_resume) {
-      g_PauseTimeUsed = g_PauseTimeUsed + g_FixedPauseTimeCvar.IntValue;
+      g_PauseTimeUsed = g_PauseTimeUsed + g_FixedPauseTimeCvar.IntValue - 1;
       CreateTimer(1.0, Timer_PauseTimeCheck, team, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+      CreateTimer(1.0, Timer_UnpauseEventCheck, team, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
     }
 
     g_TeamPausesUsed[team]++;
@@ -115,6 +116,36 @@ public Action Command_Pause(int client, int args) {
   return Plugin_Handled;
 }
 
+public Action Timer_UnpauseEventCheck(Handle timer, int data) {
+  if (!IsPaused()) {
+    // Reset state
+    g_PauseTimeUsed = 0;
+    return Plugin_Stop;
+  }
+
+  // Unlimited pause time.
+  if (g_MaxPauseTimeCvar.IntValue <= 0) {
+    // Reset state
+    g_PauseTimeUsed = 0;
+    return Plugin_Stop;
+  }
+  
+  MatchTeam team = view_as<MatchTeam>(data);
+  if (g_PauseTimeUsed <= 0) {
+    EventLogger_Unpause(team);
+    LogDebug("Calling Get5_OnMatchUnpaused(team=%d)", team);
+    Call_StartForward(g_OnMatchUnpaused);
+    Call_PushCell(team);
+    Call_Finish();
+    // Reset state
+    g_PauseTimeUsed = 0;
+    return Plugin_Stop;
+  }
+  g_PauseTimeUsed--;
+  LogDebug("Subtracting time used. Current time = %d", g_PauseTimeUsed);
+  return Plugin_Continue;
+}
+
 public Action Timer_PauseTimeCheck(Handle timer, int data) {
   if (!Pauseable() || !IsPaused() || g_FixedPauseTimeCvar.BoolValue) {
     return Plugin_Stop;
@@ -132,7 +163,6 @@ public Action Timer_PauseTimeCheck(Handle timer, int data) {
 
   MatchTeam team = view_as<MatchTeam>(data);
   int timeLeft = g_MaxPauseTimeCvar.IntValue - g_TeamPauseTimeUsed[team];
-  g_PauseTimeUsed--;
   // Only count against the team's pause time if we're actually in the freezetime
   // pause and they haven't requested an unpause yet.
   if (InFreezeTime() && !g_TeamReadyForUnpause[team]) {
@@ -144,15 +174,6 @@ public Action Timer_PauseTimeCheck(Handle timer, int data) {
       Get5_MessageToAll("%t", "PauseTimeExpirationInfoMessage", g_FormattedTeamNames[team],
                         timeLeft, pausePeriodString);
     }
-  }
-  if (g_PauseTimeUsed <= 0) {
-    EventLogger_Unpause(team);
-    LogDebug("Calling Get5_OnMatchUnpaused(team=%d)", team);
-    Call_StartForward(g_OnMatchUnpaused);
-    Call_PushCell(team);
-    Call_Finish();
-    // Reset state
-    g_PauseTimeUsed = 0;
   }
   if (timeLeft <= 0) {
     Get5_MessageToAll("%t", "PauseRunoutInfoMessage", g_FormattedTeamNames[team]);
