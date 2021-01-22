@@ -134,13 +134,12 @@ public Action Timer_UnpauseEventCheck(Handle timer, int data) {
     return Plugin_Stop;
   }
 
-  if (!IsPaused()) {
+  if (!InFreezeTime()) {
     // Someone can call pause during a round and will set this timer.
     // Keep running timer until we are paused.
     return Plugin_Continue;
-  }
-
-  if (g_PauseTimeUsed <= 0) {
+  } else {
+    if (g_PauseTimeUsed <= 0) {
     MatchTeam team = view_as<MatchTeam>(data);
     EventLogger_Unpause(team);
     LogDebug("Calling Get5_OnMatchUnpaused(team=%d)", team);
@@ -152,9 +151,10 @@ public Action Timer_UnpauseEventCheck(Handle timer, int data) {
     g_PauseTimerHandle = INVALID_HANDLE;
     return Plugin_Stop;
   }
+    g_PauseTimeUsed--;
+    LogDebug("Subtracting time used. Current time = %d", g_PauseTimeUsed);
+  }
 
-  g_PauseTimeUsed--;
-  LogDebug("Subtracting time used. Current time = %d", g_PauseTimeUsed);
   return Plugin_Continue;
 }
 
