@@ -118,20 +118,20 @@ public Action Command_Pause(int client, int args) {
 
 public Action Timer_UnpauseEventCheck(Handle timer, int data) {
   if (!IsPaused()) {
-    // Reset state
+    // No longer paused, usually from !unpause. Therefore reset state.
     g_PauseTimeUsed = 0;
     return Plugin_Stop;
   }
 
   // Unlimited pause time.
   if (g_MaxPauseTimeCvar.IntValue <= 0) {
-    // Reset state
+    // Reset state.
     g_PauseTimeUsed = 0;
     return Plugin_Stop;
   }
-  
-  MatchTeam team = view_as<MatchTeam>(data);
+
   if (g_PauseTimeUsed <= 0) {
+    MatchTeam team = view_as<MatchTeam>(data);
     EventLogger_Unpause(team);
     LogDebug("Calling Get5_OnMatchUnpaused(team=%d)", team);
     Call_StartForward(g_OnMatchUnpaused);
