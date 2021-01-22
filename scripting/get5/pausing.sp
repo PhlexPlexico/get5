@@ -91,7 +91,10 @@ public Action Command_Pause(int client, int args) {
     if (need_resume) {
       g_PauseTimeUsed = g_PauseTimeUsed + g_FixedPauseTimeCvar.IntValue - 1;
       CreateTimer(1.0, Timer_PauseTimeCheck, team, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
-      CreateTimer(1.0, Timer_UnpauseEventCheck, team, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+      // Keep track of timer, since we don't want several timers created for one pause checking instance.
+      if (g_PauseTimerHandle == INVALID_HANDLE) {
+        g_PauseTimerHandle = CreateTimer(1.0, Timer_UnpauseEventCheck, team, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+      }
     }
 
     g_TeamPausesUsed[team]++;
@@ -117,9 +120,9 @@ public Action Command_Pause(int client, int args) {
 }
 
 public Action Timer_UnpauseEventCheck(Handle timer, int data) {
-  if (!IsPaused()) {
-    // No longer paused, usually from !unpause. Therefore reset state.
+  if (!Pauseable()) {
     g_PauseTimeUsed = 0;
+    g_PauseTimerHandle = INVALID_HANDLE;
     return Plugin_Stop;
   }
 
@@ -127,7 +130,14 @@ public Action Timer_UnpauseEventCheck(Handle timer, int data) {
   if (g_MaxPauseTimeCvar.IntValue <= 0) {
     // Reset state.
     g_PauseTimeUsed = 0;
+    g_PauseTimerHandle = INVALID_HANDLE;
     return Plugin_Stop;
+  }
+
+  if (!IsPaused()) {
+    // Someone can call pause during a round and will set this timer.
+    // Keep running timer until we are paused.
+    return Plugin_Continue;
   }
 
   if (g_PauseTimeUsed <= 0) {
@@ -139,8 +149,10 @@ public Action Timer_UnpauseEventCheck(Handle timer, int data) {
     Call_Finish();
     // Reset state
     g_PauseTimeUsed = 0;
+    g_PauseTimerHandle = INVALID_HANDLE;
     return Plugin_Stop;
   }
+
   g_PauseTimeUsed--;
   LogDebug("Subtracting time used. Current time = %d", g_PauseTimeUsed);
   return Plugin_Continue;
