@@ -109,16 +109,10 @@ stock bool LoadMatchConfig(const char[] config, bool restoreBackup = false) {
   if (!restoreBackup) {
     SetStartingTeams();
     ExecCfg(g_WarmupCfgCvar);
-    ExecuteMatchConfigCvars();
-    LoadPlayerNames();
     EnsurePausedWarmup();
 
     EventLogger_SeriesStart();
     Stats_InitSeries();
-
-    LogDebug("Calling Get5_OnSeriesInit");
-    Call_StartForward(g_OnSeriesInit);
-    Call_Finish();
   }
 
   for (int i = 1; i <= MaxClients; i++) {
@@ -135,6 +129,13 @@ stock bool LoadMatchConfig(const char[] config, bool restoreBackup = false) {
   SetMatchTeamCvars();
   ExecuteMatchConfigCvars();
   LoadPlayerNames();
+
+  if (!restoreBackup) {
+    LogDebug("Calling Get5_OnSeriesInit");
+    Call_StartForward(g_OnSeriesInit);
+    Call_Finish();
+  }
+
   strcopy(g_LoadedConfigFile, sizeof(g_LoadedConfigFile), config);
 
   return true;
