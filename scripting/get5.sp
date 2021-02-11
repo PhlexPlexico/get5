@@ -51,6 +51,7 @@
 /** ConVar handles **/
 ConVar g_AllowTechPauseCvar;
 ConVar g_AutoLoadConfigCvar;
+ConVar g_AutoReadyActivePlayers;
 ConVar g_BackupSystemEnabledCvar;
 ConVar g_CheckAuthsCvar;
 ConVar g_DamagePrintCvar;
@@ -258,6 +259,9 @@ public void OnPluginStart() {
   g_AutoLoadConfigCvar =
       CreateConVar("get5_autoload_config", "",
                    "Name of a match config file to automatically load when the server loads");
+  g_AutoReadyActivePlayers = CreateConVar(
+      "get5_auto_ready_active_players", "0",
+      "Whether to automatically mark players as ready if they kill anyone in the warmup or veto phase.");
   g_BackupSystemEnabledCvar =
       CreateConVar("get5_backup_system_enabled", "1", "Whether the get5 backup system is enabled");
   g_DamagePrintCvar =
@@ -287,7 +291,7 @@ public void OnPluginStart() {
       "get5_kick_immunity", "1",
       "Whether or not admins with the changemap flag will be immune to kicks from \"get5_kick_when_no_match_loaded\". Set to \"0\" to disable");
   g_KickClientsWithNoMatchCvar =
-      CreateConVar("get5_kick_when_no_match_loaded", "1",
+      CreateConVar("get5_kick_when_no_match_loaded", "0",
                    "Whether the plugin kicks new clients when no match is loaded");
   g_LiveCfgCvar =
       CreateConVar("get5_live_cfg", "get5/live.cfg", "Config file to exec when the game goes live");
@@ -370,6 +374,8 @@ public void OnPluginStart() {
   AddAliasedCommand("stay", Command_Stay,
                     "Elects to stay on the current team after winning a knife round");
   AddAliasedCommand("swap", Command_Swap,
+                    "Elects to swap the current teams after winning a knife round");
+  AddAliasedCommand("switch", Command_Swap,
                     "Elects to swap the current teams after winning a knife round");
   AddAliasedCommand("t", Command_T, "Elects to start on T side after winning a knife round");
   AddAliasedCommand("ct", Command_Ct, "Elects to start on CT side after winning a knife round");
@@ -802,8 +808,8 @@ public Action Command_EndMatch(int client, int args) {
   Call_PushCell(g_TeamSeriesScores[MatchTeam_Team2]);
   Call_Finish();
 
-  UpdateClanTags();
   ChangeState(Get5State_None);
+  UpdateClanTags();
 
   Get5_MessageToAll("%t", "AdminForceEndInfoMessage");
   RestoreCvars(g_MatchConfigChangedCvars);
@@ -849,9 +855,7 @@ public Action Command_LoadMatchUrl(int client, int args) {
     if (args >= 1 && GetCmdArgString(arg, sizeof(arg))) {
       if (!LoadMatchFromUrl(arg)) {
         ReplyToCommand(client, "Failed to load match config.");
-      }
-      else
-      {
+      } else {
         ReplyToCommand(client, "Match config loading initialized.");
       }
     } else {
