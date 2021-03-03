@@ -84,8 +84,10 @@ public void EventLogger_SeriesStart() {
 
 public void EventLogger_MapVetoed(MatchTeam team, const char[] map) {
   EventLogger_StartEvent();
+
   AddTeam(params, "team", team);
   params.SetString("map_name", map);
+
   EventLogger_EndEvent("map_veto");
 }
 
@@ -95,6 +97,7 @@ public void EventLogger_MapPicked(MatchTeam team, const char[] map, int mapNumbe
   AddTeam(params, "team", team);
   params.SetString("map_name", map);
   params.SetInt("map_number", mapNumber);
+
   EventLogger_EndEvent("map_pick");
 }
 
@@ -252,14 +255,18 @@ public void EventLogger_PlayerDisconnect(int client) {
 
 public void EventLogger_TeamReady(MatchTeam team, const char[] stage) {
   EventLogger_StartEvent();
+
   AddTeam(params, "team", team);
   params.SetString("stage", stage);
+
   EventLogger_EndEvent("team_ready");
 }
 
 public void EventLogger_TeamUnready(MatchTeam team) {
   EventLogger_StartEvent();
+
   AddTeam(params, "team", team);
+
   EventLogger_EndEvent("team_unready");
 }
 
@@ -271,7 +278,7 @@ public void EventLogger_PauseCommand(MatchTeam team, PauseType pauseReason) {
   EventLogger_EndEvent("pause_command");
 }
 
-public void EventLogger_Unpause(MatchTeam team) { 
+public void EventLogger_UnpauseCommand(MatchTeam team) { 
   EventLogger_StartEvent();
   AddMapData(params);
   AddTeam(params, "request_team", team);
