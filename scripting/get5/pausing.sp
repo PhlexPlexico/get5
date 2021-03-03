@@ -1,4 +1,5 @@
 public bool Pauseable() {
+  LogDebug("HERE HERE HERE HERE HERE Calling Pauseable() gamestate is %d", g_GameState);
   return g_GameState >= Get5State_KnifeRound && g_PausingEnabledCvar.BoolValue;
 }
 
