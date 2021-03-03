@@ -714,7 +714,7 @@ public bool DeleteFileIfExists(const char[] path) {
 stock void GetPauseType(PauseType pause, char[] buffer, int len) {
   if (pause == PauseType_Tech) {
     Format(buffer, len, "technical");
-  } else if (pause == PauseType_Tac) {
+  } else if (pause == PauseType_Tactical) {
     Format(buffer, len, "tactical");
   } else {
     Format(buffer, len, "unknown");
